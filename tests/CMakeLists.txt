@@ -7,6 +7,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
+include(GoogleTest)
+
+# Version Tests
 add_executable(version_tests
     version_tests.cpp
 )
@@ -17,6 +20,17 @@ target_link_libraries(version_tests
         GTest::gtest_main
 )
 
-include(GoogleTest)
-
 gtest_discover_tests(version_tests)
+
+# Graph Tests
+add_executable(graph_tests
+    graph_tests.cpp
+)
+
+target_link_libraries(graph_tests
+    PRIVATE
+        network_influence
+        GTest::gtest_main
+)
+
+gtest_discover_tests(graph_tests)

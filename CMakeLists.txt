@@ -11,6 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(network_influence
     src/version.cpp
+    src/graph.cpp
 )
 
 target_include_directories(network_influence
