@@ -9,8 +9,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(network-influence
+add_library(network_influence
+    src/version.cpp
+)
+
+target_include_directories(network_influence
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
+add_executable(network_influence_app
     src/main.cpp
+)
+
+target_link_libraries(network_influence_app
+    PRIVATE
+        network_influence
 )
 
 # cmake -S . -B build
