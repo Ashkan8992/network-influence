@@ -22,6 +22,8 @@ public:
     
     bool is_directed() const noexcept;
     
+    void validate_node(NodeId node) const;
+    bool edge_exist(NodeId from, NodeId to) const;
     void add_edge(NodeId from, NodeId to);
     
     std::vector<NodeId> neighbors(NodeId node) const;
