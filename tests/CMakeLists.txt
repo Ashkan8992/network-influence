@@ -7,6 +7,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(googletest)
 
+target_compile_options(gtest PRIVATE
+    -Wno-character-conversion
+) # to remove the 6 conversion warnings
+
 include(GoogleTest)
 
 # Version Tests
