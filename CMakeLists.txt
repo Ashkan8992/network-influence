@@ -32,17 +32,3 @@ target_link_libraries(network_influence_app
 
 enable_testing()
 add_subdirectory(tests)
-
-# rm -rf build
-# cmake -S . -B build
-# rm -rf build-xcode
-# cmake -S . -B build-xcode -G Xcode (instead)
-# open build-xcode/NetworkInfluence.xcodeproj (or)
-# open -a Xcode build-xcode/NetworkInfluence.xcodeproj
-# cmake --build build
-# ./build/network_influence
-# ctest --test-dir build --output-on-failure (or)
-# ./build/tests/graph_tests
-
-# cmake -S . -B build-xcode -G Xcode
-# open build-xcode/NetworkInfluence.xcodeproj
