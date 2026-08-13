@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(network_influence
+    include/influence/version.hpp
+    include/influence/graph.hpp
     src/version.cpp
     src/graph.cpp
 )
@@ -31,10 +33,16 @@ target_link_libraries(network_influence_app
 enable_testing()
 add_subdirectory(tests)
 
+# rm -rf build
 # cmake -S . -B build
+# rm -rf build-xcode
+# cmake -S . -B build-xcode -G Xcode (instead)
+# open build-xcode/NetworkInfluence.xcodeproj (or)
+# open -a Xcode build-xcode/NetworkInfluence.xcodeproj
 # cmake --build build
 # ./build/network_influence
-# ctest --test-dir build
+# ctest --test-dir build --output-on-failure (or)
+# ./build/tests/graph_tests
 
 # cmake -S . -B build-xcode -G Xcode
 # open build-xcode/NetworkInfluence.xcodeproj
