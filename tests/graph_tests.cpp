@@ -30,6 +30,9 @@ TEST(GraphTest, GraphDirectedEdge) {
     
     graph.add_edge(1, 0);
     EXPECT_EQ(graph.edge_count(), 2);
+    graph.add_edge(0, 2);
+    EXPECT_EQ(graph.degree(0), 2);
+    EXPECT_EQ(graph.degree(2), 0);
 }
 
 // Test Undirected Graph, Edges, and EdgeCount
@@ -51,6 +54,8 @@ TEST(GraphTest, GraphUndirectedEdge) {
     
     graph.add_edge(1, 0);
     EXPECT_EQ(graph.edge_count(), 1);
+    graph.add_edge(0, 2);
+    EXPECT_EQ(graph.degree(0), 2);
 }
 
 // Test Graph Duplicate Edges
@@ -80,4 +85,5 @@ TEST(GraphTest, GraphOutOfRangeNode) {
     EXPECT_THROW(graph.add_edge(3, 0), std::out_of_range);
     EXPECT_THROW(graph.add_edge(0, -1), std::out_of_range);
     EXPECT_THROW(graph.neighbors(3), std::out_of_range);
+    EXPECT_THROW(graph.degree(3), std::out_of_range);
 }

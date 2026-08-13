@@ -27,6 +27,7 @@ public:
     void add_edge(NodeId from, NodeId to);
     
     std::vector<NodeId> neighbors(NodeId node) const;
+    std::size_t degree(NodeId node) const;
     
 private:
     std::size_t node_count_;

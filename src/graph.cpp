@@ -54,4 +54,9 @@ std::vector<NodeId> Graph::neighbors(NodeId node) const {
     return adjacency_[node];
 }
 
+std::size_t Graph::degree(NodeId node) const {
+    validate_node(node);
+    return adjacency_[node].size();
+}
+
 } // namespace influence
