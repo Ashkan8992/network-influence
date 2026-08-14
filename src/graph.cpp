@@ -1,5 +1,8 @@
 #include "influence/graph.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+
 namespace influence {
 
 Graph::Graph(std::size_t node_count, Direction direction)
