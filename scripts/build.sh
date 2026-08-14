@@ -15,6 +15,13 @@ ctest --test-dir build --output-on-failure
 ./build/graph_benchmark
 # ./build/tests/graph_tests (or for GoogleTest)
 
+# Release Format:
+# rm -rf build-release
+# cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
+# cmake --build build-release
+# ./build/network_influence
+# ctest --test-dir build-release --output-on-failure
+
 # For XCode Project:
 #
 # rm -rf build-xcode

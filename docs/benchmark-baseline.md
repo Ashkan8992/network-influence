@@ -20,7 +20,7 @@ Record:
 
 ## Results
 
-Record several runs rather than a single measurement.
+Record several runs rather than a single measurement. (Debug)
 
 | Run | Construction (ms) | Traversal (ms) |
 |-----|--------------------|----------------|
@@ -29,6 +29,16 @@ Record several runs rather than a single measurement.
 | 3   |       201 ms       |      31 ms     |
 | 4   |       200 ms       |      30 ms     |
 | 5   |       177 ms       |      31 ms     |
+
+Record several runs rather than a single measurement. (Release)
+
+| Run | Construction (ms) | Traversal (ms) |
+|-----|--------------------|----------------|
+| 1   |       37 ms        |      4 ms      |
+| 2   |       16 ms        |      2 ms      |
+| 3   |       32 ms        |      5 ms      |
+| 4   |       35 ms        |      4 ms      |
+| 5   |       36 ms        |      4 ms      |
 
 ## Notes
 
