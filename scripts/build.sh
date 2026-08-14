@@ -12,6 +12,7 @@ cmake -S . -B build
 cmake --build build
 # ./build/network_influence
 ctest --test-dir build --output-on-failure
+./build/graph_benchmark
 # ./build/tests/graph_tests (or for GoogleTest)
 
 # For XCode Project:

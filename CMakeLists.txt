@@ -30,5 +30,16 @@ target_link_libraries(network_influence_app
         network_influence
 )
 
+# BenchMarks
+add_executable(graph_benchmark
+    benchmarks/graph_benchmark.cpp
+)
+
+target_link_libraries(graph_benchmark
+    PRIVATE
+        network_influence
+)
+
+#Testing
 enable_testing()
 add_subdirectory(tests)
