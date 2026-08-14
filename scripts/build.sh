@@ -8,11 +8,11 @@
 set -e
 
 rm -rf build
-cmake -S . -B build
-cmake --build build
+cmake -S . -B build # cmake --preset debug (or release)
+cmake --build build # cmake --build --preset debug (or release)
 # ./build/network_influence
-ctest --test-dir build --output-on-failure
-./build/graph_benchmark
+ctest --test-dir build --output-on-failure # ctest --preset debug (or release)
+./build/graph_benchmark # ./build/debug (or release)/graph_benchmark
 # ./build/tests/graph_tests (or for GoogleTest)
 
 # Release Format:
