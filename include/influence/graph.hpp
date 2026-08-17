@@ -1,16 +1,16 @@
-#pragma once
+#pragma once       // over #ifndef
 
-#include <cstddef>
-#include <cstdint>
-#include <vector>
+#include <cstddef> // size_t
+#include <cstdint> // uint32_t
+#include <vector>  // vector
 
 namespace influence {
 
-using NodeId = std::uint32_t;
+using NodeId = std::uint32_t; // TODO: limit on network size?
 
 class Graph {
 public:
-    enum class Direction {
+    enum class Direction { // TODO: to Dir Undir?
         Directed,
         Undirected
     };
@@ -26,8 +26,10 @@ public:
     bool edge_exist(NodeId from, NodeId to) const;
     void add_edge(NodeId from, NodeId to);
     
-    std::vector<NodeId> neighbors(NodeId node) const;
     std::size_t degree(NodeId node) const;
+    std::vector<NodeId> neighbors(NodeId node) const;
+    template <typename Function> // TODO: ...
+    void for_each_neighbor(NodeId node, Function&& function) const;
     
 private:
     std::size_t node_count_;
@@ -35,5 +37,17 @@ private:
     Direction direction_;
     std::vector<std::vector<NodeId>> adjacency_;
 };
+
+template <typename Function> // TODO: ...
+void Graph::for_each_neighbor(
+    NodeId node,
+    Function&& function
+) const {
+    validate_node(node);
+
+    for (NodeId neighbor : adjacency_[node]) {
+        function(neighbor);
+    }
+}
 
 } // namespace influence

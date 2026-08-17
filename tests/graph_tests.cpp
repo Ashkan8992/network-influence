@@ -87,3 +87,23 @@ TEST(GraphTest, GraphOutOfRangeNode) {
     EXPECT_THROW(graph.neighbors(3), std::out_of_range);
     EXPECT_THROW(graph.degree(3), std::out_of_range);
 }
+
+// ForEachNeighbor Template Function
+TEST(GraphTest, ForEachNeighbor) {
+    Graph graph(3, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+    graph.add_edge(0, 2);
+
+    std::vector<influence::NodeId> visited;
+
+    graph.for_each_neighbor(0, [&](influence::NodeId neighbor) {
+        visited.push_back(neighbor);
+    });
+
+    EXPECT_EQ(visited.size(), 2);
+    EXPECT_EQ(visited[0], 1);
+    EXPECT_EQ(visited[1], 2);
+    
+    EXPECT_THROW(graph.for_each_neighbor(3, [](influence::NodeId) {}), std::out_of_range);
+}

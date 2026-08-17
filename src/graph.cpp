@@ -1,7 +1,7 @@
 #include "influence/graph.hpp"
 
-#include <algorithm>
-#include <stdexcept>
+#include <algorithm> // find
+#include <stdexcept> // throw
 
 namespace influence {
 
