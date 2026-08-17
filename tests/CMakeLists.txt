@@ -38,3 +38,16 @@ target_link_libraries(graph_tests
 )
 
 gtest_discover_tests(graph_tests)
+
+# Independent Cascade Tests
+add_executable(independent_cascade_tests
+    independent_cascade_tests.cpp
+)
+
+target_link_libraries(independent_cascade_tests
+    PRIVATE
+        network_influence
+        GTest::gtest_main
+)
+
+gtest_discover_tests(independent_cascade_tests)

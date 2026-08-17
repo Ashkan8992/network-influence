@@ -14,6 +14,7 @@ add_library(network_influence
     include/influence/graph.hpp
     src/version.cpp
     src/graph.cpp
+    src/independent_cascade.cpp
 )
 
 target_include_directories(network_influence
