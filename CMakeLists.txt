@@ -12,6 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(network_influence
     include/influence/version.hpp
     include/influence/graph.hpp
+    include/influence/independent_cascade.hpp
     src/version.cpp
     src/graph.cpp
     src/independent_cascade.cpp
