@@ -1,6 +1,7 @@
 #include "influence/graph.hpp"
 
 #include <algorithm> // find
+#include <random>    // random edge
 #include <stdexcept> // throw
 
 namespace influence {
@@ -27,7 +28,7 @@ void Graph::validate_node(NodeId node) const {
     }
 }
 
-bool Graph::edge_exist(NodeId from, NodeId to) const {
+bool Graph::edge_exists(NodeId from, NodeId to) const {
     validate_node(from);
     validate_node(to);
     
@@ -41,7 +42,7 @@ bool Graph::edge_exist(NodeId from, NodeId to) const {
 void Graph::add_edge(NodeId from, NodeId to) {
     if (from == to) { throw std::invalid_argument("Self-loops are not allowed"); }
     
-    if (edge_exist(from, to)) { return; }
+    if (edge_exists(from, to)) { return; }
     
     adjacency_[from].push_back(to);
     
@@ -50,6 +51,26 @@ void Graph::add_edge(NodeId from, NodeId to) {
     }
     
     ++edge_count_;
+}
+
+void Graph::add_random_edge(std::mt19937_64& generator) {
+    if (node_count() < 2) { throw std::invalid_argument("cannot add a random edge to a graph with fewer than two nodes"); }
+
+    std::uniform_int_distribution<NodeId> distribution(0, static_cast<NodeId>(node_count() - 1));
+
+    // TODO: prevent it from running infinitly or for a long time.
+    // TODO: e.g. add condition if graph is full then throw invalid_argument
+    while (true) {
+        const NodeId from = distribution(generator);
+        const NodeId to = distribution(generator);
+
+        if (from == to) { continue; }
+
+        if (edge_exists(from, to)) { continue;}
+
+        add_edge(from, to);
+        return;
+    }
 }
 
 std::vector<NodeId> Graph::neighbors(NodeId node) const {

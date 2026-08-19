@@ -2,6 +2,7 @@
 
 #include <cstddef> // size_t
 #include <cstdint> // uint32_t
+#include <random>  // random edge
 #include <vector>  // vector
 
 namespace influence {
@@ -23,8 +24,9 @@ public:
     bool is_directed() const noexcept;
     
     void validate_node(NodeId node) const;
-    bool edge_exist(NodeId from, NodeId to) const;
+    bool edge_exists(NodeId from, NodeId to) const;
     void add_edge(NodeId from, NodeId to);
+    void add_random_edge(std::mt19937_64& generator);
     
     std::size_t degree(NodeId node) const;
     std::vector<NodeId> neighbors(NodeId node) const;
