@@ -7,7 +7,7 @@
 
 namespace influence {
 
-IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0), generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed) {
+IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0), generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) {
 
     if (configuration_.activation_probability < 0.0 ||
         configuration_.activation_probability > 1.0) {
@@ -45,43 +45,54 @@ void IndependentCascade::cascade() {
 
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     
-    // Nodes activated during the current propagation step.
-    std::vector<NodeId> current_frontier;
-    // Nodes activated during the next propagation step.
-    std::vector<NodeId> next_frontier;
-    
-    current_frontier.reserve(seeds_.size());
-    
     //  Tracks whether a node has already been activated during this cascade.
-    std::vector<uint8_t> active(node_count, 0);
+    std::fill(active_.begin(), active_.end(), 0);
+    // TODO: replace this later with something more optimize like the line below
+    /* std::vector<uint8_t> active_(node_count, 0);
+     // turned into private member -- moved to constructor */
+    
+    // Nodes activated during the current propagation step.
+    current_frontier_.clear();
+    /* std::vector<NodeId> current_frontier_;
+     // turned into private member */
+    
+    // Nodes activated during the next propagation step.
+    next_frontier_.clear();
+    /* std::vector<NodeId> next_frontier_;
+     // turned into private member */
+    
+    // current_frontier.reserve(seeds_.size());
+    if (current_frontier_.capacity() < seeds_.size()) {
+        current_frontier_.reserve(seeds_.size());
+    }
     
     // Activate the initial seeds.
     for (NodeId seed : seeds_) {
-        if (active[seed] == 1) { continue; }
-        active[seed] = 1;
+        if (active_[seed] == 1) { continue; }
+        active_[seed] = 1;
         ++access_counts_[seed];
-        current_frontier.push_back(seed);
+        current_frontier_.push_back(seed);
     }
     
     // Independent Cascade propagation.
-    while (!current_frontier.empty()) {
-        next_frontier.clear();
+    while (!current_frontier_.empty()) {
+        next_frontier_.clear();
         
-        for (NodeId node : current_frontier) {
+        for (NodeId node : current_frontier_) {
             graph_.for_each_neighbor(node, [&](NodeId neighbor) {
-                if (active[neighbor] == 1) { return; }
+                if (active_[neighbor] == 1) { return; }
 
                 const Probability random_value = distribution(generator_);
 
                 if (random_value < configuration_.activation_probability) {
-                    active[neighbor] = 1;
+                    active_[neighbor] = 1;
                     ++access_counts_[neighbor];
-                    next_frontier.push_back(neighbor);
+                    next_frontier_.push_back(neighbor);
                 }
             }
             );
         }
-        current_frontier.swap(next_frontier);
+        current_frontier_.swap(next_frontier_);
     }
 }
 

@@ -23,7 +23,6 @@ ctest --test-dir build --output-on-failure # ctest --preset debug (or release)
 # ctest --test-dir build-release --output-on-failure
 
 # For XCode Project:
-#
 # rm -rf build-xcode
 # cmake -S . -B build-xcode -G Xcode (instead)
 # open build-xcode/NetworkInfluence.xcodeproj (or)

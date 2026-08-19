@@ -46,6 +46,14 @@ private:
     
     // Persistent random-number generator.
     std::mt19937_64 generator_;
+    
+    /* ========================================
+     First data-oriented optimization
+       ======================================== */
+    // Reused between cascades to avoid repeated allocations.
+    std::vector<std::uint8_t> active_;
+    std::vector<NodeId> current_frontier_;
+    std::vector<NodeId> next_frontier_;
 };
 
 }  // namespace influence
