@@ -28,3 +28,11 @@ ctest --test-dir build --output-on-failure # ctest --preset debug (or release)
 # cmake -S . -B build-xcode -G Xcode (instead)
 # open build-xcode/NetworkInfluence.xcodeproj (or)
 # open -a Xcode build-xcode/NetworkInfluence.xcodeproj
+
+# Profiling:
+# cmake -S . -B build-profile -DCMAKE_BUILD_TYPE=RelWithDebInfo
+# cmake --build build-profile
+# ./build-profile/independent_cascade_benchmark
+# xcrun xctrace record \
+#     --template 'Time Profiler' \
+#     --launch ./build-profile/independent_cascade_benchmark
