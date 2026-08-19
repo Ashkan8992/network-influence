@@ -6,11 +6,24 @@
 #include <iomanip> // setprecision?
 #include <iostream>
 #include <random>
+#include <string>
+#include <vector>
 
-int main() {
-    constexpr std::size_t node_count = 10'000;
-    constexpr std::size_t edge_count = 50'000;
-    constexpr std::size_t simulations = 10'000;
+namespace {
+
+struct BenchmarkScenario {
+    std::string name;
+    std::size_t node_count;
+    std::size_t edge_count;
+    double activation_probability;
+    std::size_t simulations;
+};
+
+void run_benchmark(const BenchmarkScenario& scenario) {
+    std::cout << "\n"
+        << "========================================\n"
+        << scenario.name << '\n'
+        << "========================================\n";
 
     /*
      * ---------------------------------------------------------
@@ -19,7 +32,7 @@ int main() {
      */
     const auto graph_start = std::chrono::steady_clock::now();
     
-    influence::Graph graph(node_count, influence::Graph::Direction::Directed);
+    influence::Graph graph(scenario.node_count, influence::Graph::Direction::Directed);
 
     /*
      * Build a deterministic graph for reproducible benchmarking.
@@ -29,7 +42,7 @@ int main() {
      */
     std::mt19937_64 graph_generator(12345);
 
-    for (std::size_t i = 0; i < edge_count; ++i) {
+    for (std::size_t i = 0; i < scenario.edge_count; ++i) {
         graph.add_random_edge(graph_generator);
     }
     
@@ -44,8 +57,8 @@ int main() {
 
     influence::IndependentCascade::Configuration config;
 
-    config.activation_probability = 0.1;
-    config.simulations = simulations;
+    config.activation_probability = scenario.activation_probability;
+    config.simulations = scenario.simulations;
     config.random_seed = 12345;
 
     influence::IndependentCascade simulation(graph, config, {0});
@@ -63,11 +76,11 @@ int main() {
 
     const std::chrono::duration<double> simulation_elapsed = simulation_end - simulation_start;
 
-    const double simulations_per_second = static_cast<double>(simulations) / simulation_elapsed.count();
+    const double simulations_per_second = static_cast<double>(scenario.simulations) / simulation_elapsed.count();
 
     /*
      * ---------------------------------------------------------
-     * Results
+     * Basic correctness/sanity metric
      * ---------------------------------------------------------
      */
     const auto& probabilities = simulation.access_probabilities();
@@ -80,7 +93,12 @@ int main() {
 
     const double average_probability =
         total_probability / static_cast<double>(probabilities.size());
-
+    
+    /*
+     * ---------------------------------------------------------
+     * Results
+     * ---------------------------------------------------------
+     */
     std::cout << std::fixed << std::setprecision(6);
     
     std::cout
@@ -88,12 +106,51 @@ int main() {
         << "------------------------------\n"
         << "Nodes:                  " << graph.node_count() << '\n'
         << "Edges:                  " << graph.edge_count() << '\n'
-        << "Simulations:            " << simulations << '\n'
-        << "Activation probability: " << config.activation_probability << '\n'
+        << "Simulations:            " << scenario.simulations << '\n'
+        << "Activation probability: " << scenario.activation_probability << '\n'
         << "Graph construction:     " << graph_elapsed.count() << " s\n"
         << "IC simulation:          " << simulation_elapsed.count() << " s\n"
         << "Simulations/second:     " << simulations_per_second << '\n'
         << "Average access prob.:   " << average_probability << '\n';
+}
+
+}  // namespace
+
+int main() {
+    const std::vector<BenchmarkScenario> scenarios = {
+        {
+            "Small sparse graph",
+            1'000,
+            5'000,
+            0.1,
+            10'000
+        },
+        {
+            "Medium sparse graph",
+            10'000,
+            50'000,
+            0.1,
+            10'000
+        },
+        {
+            "Large sparse graph",
+            100'000,
+            500'000,
+            0.1,
+            10'000
+        },
+        {
+            "Medium graph - high propagation",
+            10'000,
+            50'000,
+            1.0,
+            10'000
+        }
+    };
+
+    for (const auto& scenario : scenarios) {
+        run_benchmark(scenario);
+    }
 
     return 0;
 }
