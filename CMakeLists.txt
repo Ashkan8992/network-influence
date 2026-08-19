@@ -32,12 +32,23 @@ target_link_libraries(network_influence_app
         network_influence
 )
 
-# BenchMarks
+# BenchMarks:
+# Graph Benchmark
 add_executable(graph_benchmark
     benchmarks/graph_benchmark.cpp
 )
 
 target_link_libraries(graph_benchmark
+    PRIVATE
+        network_influence
+)
+
+# Independent Cascade Benchmark
+add_executable(independent_cascade_benchmark
+    benchmarks/independent_cascade_benchmark.cpp
+)
+
+target_link_libraries(independent_cascade_benchmark
     PRIVATE
         network_influence
 )
