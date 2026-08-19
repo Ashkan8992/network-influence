@@ -107,6 +107,54 @@ TEST(IndependentCascadeTest, IsolatedSeedRemainsActive) { // + SeedCannotActivat
     EXPECT_EQ(result[1], 0);
 }
 
+TEST(IndependentCascadeTest, SameRandomSeedProducesSameResults) {
+    Graph graph(4, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+    graph.add_edge(0, 2);
+    graph.add_edge(1, 3);
+    graph.add_edge(2, 3);
+
+    IndependentCascade::Configuration config;
+
+    config.activation_probability = 0.5;
+    config.simulations = 1'000;
+    config.random_seed = 12345;
+
+    IndependentCascade first(graph, config, {0});
+
+    IndependentCascade second(graph, config, {0});
+
+    first.run();
+    second.run();
+
+    EXPECT_EQ(first.access_probabilities(), second.access_probabilities());
+}
+
+TEST(IndependentCascadeTest, RunStartsANewExperiment) {
+    Graph graph(2, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+
+    IndependentCascade::Configuration config;
+
+    config.activation_probability = 1.0;
+    config.simulations = 100;
+    config.random_seed = 12345;
+
+    IndependentCascade simulation(graph, config, {0});
+
+    simulation.run();
+
+    const auto first = simulation.access_probabilities();
+
+    simulation.run();
+
+    const auto second = simulation.access_probabilities();
+
+    EXPECT_EQ(first, second);
+}
+
 /* TEST(IndependentCascadeTest, CascadeEffectProbability) {
     Graph graph(4, Graph::Direction::Directed);
 
