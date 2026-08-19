@@ -107,3 +107,48 @@ TEST(GraphTest, ForEachNeighbor) {
     
     EXPECT_THROW(graph.for_each_neighbor(3, [](influence::NodeId) {}), std::out_of_range);
 }
+
+TEST(GraphTest, AddRandomEdgeIncreasesEdgeCount) {
+    Graph graph(100, Graph::Direction::Directed);
+
+    std::mt19937_64 generator(12345);
+
+    graph.add_random_edge(generator);
+
+    EXPECT_EQ(graph.edge_count(), 1);
+}
+
+TEST(GraphTest, RandomEdgesAreUnique) {
+    Graph graph(100, Graph::Direction::Directed);
+
+    std::mt19937_64 generator(12345);
+
+    constexpr std::size_t edge_count = 1'000;
+
+    for (std::size_t i = 0; i < edge_count; ++i) {
+        graph.add_random_edge(generator);
+    }
+
+    EXPECT_EQ(graph.edge_count(), edge_count);
+}
+
+TEST(GraphTest, RandomEdgesAreNotSelfLoops) {
+    Graph graph(100, Graph::Direction::Directed);
+
+    std::mt19937_64 generator(12345);
+
+    constexpr std::size_t edge_count = 1'000;
+
+    for (std::size_t i = 0; i < edge_count; ++i) {
+        graph.add_random_edge(generator);
+    }
+
+    /*
+     * We can't inspect the edge list here unless your Graph API
+     * exposes it. If edge_list() is already available, verify:
+     *
+     * EXPECT_NE(from, to);
+     *
+     * for every edge.
+     */
+}
