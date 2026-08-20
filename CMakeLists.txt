@@ -74,7 +74,7 @@ target_link_libraries(independent_cascade_profile
 if(ENABLE_SIMULATION_METRICS)
     target_compile_definitions(
         network_influence
-        PRIVATE
+        PUBLIC
             INFLUENCE_ENABLE_SIMULATION_METRICS
     )
 endif()

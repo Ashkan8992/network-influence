@@ -95,7 +95,7 @@ void run_benchmark(const BenchmarkScenario& scenario) {
      * ---------------------------------------------------------
      */
     
-// #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
 
     const auto& metrics = simulation.metrics();
 
@@ -120,7 +120,7 @@ void run_benchmark(const BenchmarkScenario& scenario) {
         << metrics.activation_failures
         << '\n';
 
-// #endif
+#endif
 }
 
 }  // namespace

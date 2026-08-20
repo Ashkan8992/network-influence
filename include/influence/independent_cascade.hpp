@@ -43,7 +43,9 @@ public:
         std::uint64_t activation_failures = 0;
     };
 
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
     const Metrics& metrics() const;
+#endif
 
 private:
     const Graph& graph_;
