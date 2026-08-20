@@ -1,6 +1,9 @@
 .DS_Store
 build/
 build-release/
+build-release-before/
 build-xcode/
 build-profile/
+build-metrics/
 Launch_independent_cascade_benchmark_2026-08-19_11.47.52_C8A91B0D.trace/
+Launch_independent_cascade_benchmark_2026-08-20_10.25.13_6F0954FA.trace/

@@ -16,6 +16,11 @@ if(NOT CMAKE_BUILD_TYPE)
     )
 endif()
 
+option(ENABLE_SIMULATION_METRICS
+    "Enable Independent Cascade workload metrics"
+    OFF
+)
+
 add_library(network_influence
     include/influence/version.hpp
     include/influence/graph.hpp
@@ -44,7 +49,6 @@ target_link_libraries(network_influence_app
 add_executable(graph_benchmark
     benchmarks/graph_benchmark.cpp
 )
-
 target_link_libraries(graph_benchmark
     PRIVATE
         network_influence
@@ -54,11 +58,26 @@ target_link_libraries(graph_benchmark
 add_executable(independent_cascade_benchmark
     benchmarks/independent_cascade_benchmark.cpp
 )
-
 target_link_libraries(independent_cascade_benchmark
     PRIVATE
         network_influence
 )
+
+# Independent Cascade Profile
+add_executable(independent_cascade_profile
+    benchmarks/independent_cascade_profile.cpp
+)
+target_link_libraries(independent_cascade_profile
+    PRIVATE
+        network_influence
+)
+if(ENABLE_SIMULATION_METRICS)
+    target_compile_definitions(
+        network_influence
+        PRIVATE
+            INFLUENCE_ENABLE_SIMULATION_METRICS
+    )
+endif()
 
 #Testing
 enable_testing()
