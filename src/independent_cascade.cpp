@@ -31,6 +31,9 @@ IndependentCascade::IndependentCascade(const Graph& graph, Configuration configu
 }
 
 void IndependentCascade::cascade() {
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    ++metrics_.cascades;
+#endif
     const std::size_t node_count = graph_.node_count();
     
     /* Reproducibility Purposes
@@ -72,6 +75,9 @@ void IndependentCascade::cascade() {
         active_[seed] = 1;
         ++access_counts_[seed];
         current_frontier_.push_back(seed);
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    ++metrics_.activated_nodes;
+#endif
     }
     
     // Independent Cascade propagation.
@@ -80,14 +86,25 @@ void IndependentCascade::cascade() {
         
         for (NodeId node : current_frontier_) {
             graph_.for_each_neighbor(node, [&](NodeId neighbor) {
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+        ++metrics_.neighbor_examinations;
+#endif
                 if (active_[neighbor] == 1) { return; }
 
                 const Probability random_value = distribution(generator_);
 
                 if (random_value < configuration_.activation_probability) {
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+            ++metrics_.activation_successes;
+            ++metrics_.activated_nodes;
+#endif
                     active_[neighbor] = 1;
                     ++access_counts_[neighbor];
                     next_frontier_.push_back(neighbor);
+                } else {
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+            ++metrics_.activation_failures;
+#endif
                 }
             }
             );
@@ -117,5 +134,14 @@ void IndependentCascade::run() {
 const std::vector<IndependentCascade::Probability>& IndependentCascade::access_probabilities() const {
     return access_probs_;
 }
+
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+
+const IndependentCascade::Metrics&
+IndependentCascade::metrics() const {
+    return metrics_;
+}
+
+#endif
 
 }  // namespace influence

@@ -26,6 +26,10 @@ rather than assumptions.
 ```bash
 cmake -S . -B build-profile \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
+(or for metrics)
+cmake -S . -B build-metrics \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DENABLE_SIMULATION_METRICS=ON
 
 cmake --build build-profile
 
@@ -100,3 +104,25 @@ Graph construction:     0.003341 s --> 0.003504 s --> 0.004854 s
 IC simulation:          2.232285 s --> 2.323884 s --> 2.598152 s --> 2.238506
 Simulations/second:     4479.745993 --> 4303.141547 --> 3848.890197
 Average access prob.:   0.995300
+
+### Tool
+
+Apple Instruments Time Profiler was used with a
+`RelWithDebInfo` build.
+
+### Findings
+
+Top CPU-consuming functions:
+
+within the propagation loop: adjacency-list traversal, iterator overhead, and random-number generation.
+cascade count
+activated nodes
+neighbor examinations
+successful activation attempts
+failed activation attempts
+1. random-number generation
+2. adjacency iteration
+
+### Interpretation
+
+TODO

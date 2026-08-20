@@ -33,6 +33,17 @@ public:
     
     // Access the nodes activation probabilities.
     const std::vector<Probability>& access_probabilities() const;
+    
+    // The rest is for profiling and metrics TODO: remove them
+    struct Metrics {
+        std::uint64_t cascades = 0;
+        std::uint64_t activated_nodes = 0;
+        std::uint64_t neighbor_examinations = 0;
+        std::uint64_t activation_successes = 0;
+        std::uint64_t activation_failures = 0;
+    };
+
+    const Metrics& metrics() const;
 
 private:
     const Graph& graph_;
@@ -54,6 +65,11 @@ private:
     std::vector<std::uint8_t> active_;
     std::vector<NodeId> current_frontier_;
     std::vector<NodeId> next_frontier_;
+    
+    // The rest is for profiling and metrics TODO: remove them
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    Metrics metrics_;
+#endif
 };
 
 }  // namespace influence
