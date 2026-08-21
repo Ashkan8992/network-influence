@@ -25,35 +25,13 @@ public:
         const std::vector<NodeId> seeds
     );
     
-    // Run one stochastic Independent Cascade.
-    void cascade();
-    
-    // Run the configured number of cascades.
-    void run();
-    
-    // Access the nodes activation probabilities.
-    const std::vector<Probability>& access_probabilities() const;
-    
-    // The rest is for profiling and metrics TODO: remove them
-    struct Metrics {
-        std::uint64_t cascades = 0;
-        std::uint64_t activated_nodes = 0;
-        std::uint64_t neighbor_examinations = 0;
-        std::uint64_t activation_successes = 0;
-        std::uint64_t activation_failures = 0;
-    };
-
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-    const Metrics& metrics() const;
-#endif
-
 private:
     const Graph& graph_;
     Configuration configuration_;
     std::vector<NodeId> seeds_;
     
     // Number of cascades each node was activated.
-    std::vector<std::size_t> access_counts_;
+    std::vector<std::uint64_t> access_counts_;
     // Activation probability of each node.
     std::vector<Probability> access_probs_;
     
@@ -80,7 +58,31 @@ private:
         std::vector<std::uint64_t> access_counts_;
     };
     
-    // The rest is for profiling and metrics
+    // Run one stochastic Independent Cascade.
+    void cascade(WorkerState& state);
+    
+public:
+    // Run the configured number of cascades.
+    void run();
+    
+    // Access the nodes activation probabilities.
+    const std::vector<Probability>& access_probabilities() const;
+    
+    // The rest is for profiling and metrics TODO: remove them
+    struct Metrics {
+        std::uint64_t cascades = 0;
+        std::uint64_t activated_nodes = 0;
+        std::uint64_t neighbor_examinations = 0;
+        std::uint64_t activation_successes = 0;
+        std::uint64_t activation_failures = 0;
+    };
+
+#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    const Metrics& metrics() const;
+#endif
+
+private:
+    // For profiling and metrics
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
     Metrics metrics_;
 #endif

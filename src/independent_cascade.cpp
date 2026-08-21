@@ -7,7 +7,7 @@
 
 namespace influence {
 
-IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0), generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) {
+IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0), generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) { // TODO: remove active_ initiation, and generator_ and access_count_?
 
     if (configuration_.activation_probability < 0.0 ||
         configuration_.activation_probability > 1.0) {
@@ -30,7 +30,7 @@ IndependentCascade::IndependentCascade(const Graph& graph, Configuration configu
     }
 }
 
-void IndependentCascade::cascade() {
+void IndependentCascade::cascade(WorkerState& state) {
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
     ++metrics_.cascades;
 #endif
@@ -49,58 +49,58 @@ void IndependentCascade::cascade() {
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     
     //  Tracks whether a node has already been activated during this cascade.
-    std::fill(active_.begin(), active_.end(), 0);
+    std::fill(state.active_.begin(), state.active_.end(), 0);
     // TODO: replace this later with something more optimize like the line below
     /* std::vector<uint8_t> active_(node_count, 0);
      // turned into private member -- moved to constructor */
     
     // Nodes activated during the current propagation step.
-    current_frontier_.clear();
+    state.current_frontier_.clear();
     /* std::vector<NodeId> current_frontier_;
      // turned into private member */
     
     // Nodes activated during the next propagation step.
-    next_frontier_.clear();
+    state.next_frontier_.clear();
     /* std::vector<NodeId> next_frontier_;
      // turned into private member */
     
-    // current_frontier.reserve(seeds_.size());
-    if (current_frontier_.capacity() < seeds_.size()) {
-        current_frontier_.reserve(seeds_.size());
+    // state.current_frontier.reserve(seeds_.size());
+    if (state.current_frontier_.capacity() < seeds_.size()) {
+        state.current_frontier_.reserve(seeds_.size());
     }
     
     // Activate the initial seeds.
     for (NodeId seed : seeds_) {
-        if (active_[seed] == 1) { continue; }
-        active_[seed] = 1;
-        ++access_counts_[seed];
-        current_frontier_.push_back(seed);
+        if (state.active_[seed] == 1) { continue; }
+        state.active_[seed] = 1;
+        ++state.access_counts_[seed];
+        state.current_frontier_.push_back(seed);
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
     ++metrics_.activated_nodes;
 #endif
     }
     
     // Independent Cascade propagation.
-    while (!current_frontier_.empty()) {
-        next_frontier_.clear();
+    while (!state.current_frontier_.empty()) {
+        state.next_frontier_.clear();
         
-        for (NodeId node : current_frontier_) {
+        for (NodeId node : state.current_frontier_) {
             graph_.for_each_neighbor(node, [&](NodeId neighbor) {
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
         ++metrics_.neighbor_examinations;
 #endif
-                if (active_[neighbor] == 1) { return; }
+                if (state.active_[neighbor] == 1) { return; }
 
-                const Probability random_value = distribution(generator_);
+                const Probability random_value = distribution(state.generator_);
 
                 if (random_value < configuration_.activation_probability) {
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
             ++metrics_.activation_successes;
             ++metrics_.activated_nodes;
 #endif
-                    active_[neighbor] = 1;
-                    ++access_counts_[neighbor];
-                    next_frontier_.push_back(neighbor);
+                    state.active_[neighbor] = 1;
+                    ++state.access_counts_[neighbor];
+                    state.next_frontier_.push_back(neighbor);
                 } else {
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
             ++metrics_.activation_failures;
@@ -109,7 +109,7 @@ void IndependentCascade::cascade() {
             }
             );
         }
-        current_frontier_.swap(next_frontier_);
+        state.current_frontier_.swap(state.next_frontier_);
     }
 }
 
@@ -120,9 +120,18 @@ void IndependentCascade::run() {
     std::fill(access_counts_.begin(), access_counts_.end(), 0);
     std::fill(access_probs_.begin(), access_probs_.end(), 0);
     
+    WorkerState state;
+    state.generator_.seed(configuration_.random_seed);
+    state.active_.resize(graph_.node_count(), 0);
+    state.current_frontier_.reserve(graph_.node_count());
+    state.next_frontier_.reserve(graph_.node_count());
+    state.access_counts_.assign(graph_.node_count(), 0);
+    
     for (size_t simulation = 0; simulation < configuration_.simulations; ++simulation) {
-        cascade();
+        cascade(state);
     }
+    
+    access_counts_ = std::move(state.access_counts_);
 
     // Convert accumulated activation counts into access probabilities.
     const Probability simulation_count = static_cast<Probability>(configuration_.simulations);
