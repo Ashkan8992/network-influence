@@ -200,6 +200,36 @@ TEST(IndependentCascadeTest, DifferentSeedsCanProduceDifferentResults) {
               second.access_probabilities());
 }
 
+TEST(IndependentCascadeTest, ParallelMatchesSequential) {
+    Graph graph(3, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+    graph.add_edge(1, 2);
+
+    IndependentCascade::Configuration config;
+    config.activation_probability = 0.5;
+    config.simulations = 1000;
+    config.random_seed = 12345;
+
+    auto sequential_config = config;
+    sequential_config.worker_count = 1;
+
+    auto parallel_config = config;
+    parallel_config.worker_count = 4;
+
+    IndependentCascade sequential(graph, sequential_config, {0});
+    
+    IndependentCascade parallel(graph, sequential_config, {0});
+
+    sequential.run();
+    parallel.run();
+
+    EXPECT_EQ(
+        sequential.access_probabilities(),
+        parallel.access_probabilities()
+    );
+}
+
 /* TEST(IndependentCascadeTest, CascadeEffectProbability) {
     Graph graph(4, Graph::Direction::Directed);
 

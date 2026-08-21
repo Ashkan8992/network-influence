@@ -3,11 +3,12 @@
 #include <algorithm>
 #include <random>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 namespace influence {
 
-IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0), generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) { // TODO: remove active_ initiation, and generator_ and access_count_?
+IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0) { //, generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) { // TODO: remove active_ initiation, and generator_ and access_count_?
 
     if (configuration_.activation_probability < 0.0 ||
         configuration_.activation_probability > 1.0) {
@@ -31,9 +32,9 @@ IndependentCascade::IndependentCascade(const Graph& graph, Configuration configu
 }
 
 void IndependentCascade::cascade(WorkerState& state) {
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-    ++metrics_.cascades;
-#endif
+    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    ++state.metrics_.cascades;
+    #endif
     const std::size_t node_count = graph_.node_count();
     
     /* Reproducibility Purposes
@@ -73,11 +74,11 @@ void IndependentCascade::cascade(WorkerState& state) {
     for (NodeId seed : seeds_) {
         if (state.active_[seed] == 1) { continue; }
         state.active_[seed] = 1;
-        ++state.access_counts_[seed];
+        ++state.partial_access_counts_[seed];
         state.current_frontier_.push_back(seed);
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-    ++metrics_.activated_nodes;
-#endif
+        #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+        ++state.metrics_.activated_nodes;
+        #endif
     }
     
     // Independent Cascade propagation.
@@ -86,25 +87,25 @@ void IndependentCascade::cascade(WorkerState& state) {
         
         for (NodeId node : state.current_frontier_) {
             graph_.for_each_neighbor(node, [&](NodeId neighbor) {
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-        ++metrics_.neighbor_examinations;
-#endif
+            #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+            ++state.metrics_.neighbor_examinations;
+            #endif
                 if (state.active_[neighbor] == 1) { return; }
 
                 const Probability random_value = distribution(state.generator_);
 
                 if (random_value < configuration_.activation_probability) {
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-            ++metrics_.activation_successes;
-            ++metrics_.activated_nodes;
-#endif
+                    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+                    ++state.metrics_.activation_successes;
+                    ++state.metrics_.activated_nodes;
+                    #endif
                     state.active_[neighbor] = 1;
-                    ++state.access_counts_[neighbor];
+                    ++state.partial_access_counts_[neighbor];
                     state.next_frontier_.push_back(neighbor);
                 } else {
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-            ++metrics_.activation_failures;
-#endif
+                    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+                    ++state.metrics_.activation_failures;
+                    #endif
                 }
             }
             );
@@ -113,26 +114,52 @@ void IndependentCascade::cascade(WorkerState& state) {
     }
 }
 
+void IndependentCascade::run_worker(WorkerState& state){
+    for (size_t simulation = 0; simulation < state.simulations_; ++simulation) {
+        state.generator_.seed(cascade_seed(simulation)); // TODO: Commit 33
+        cascade(state);
+    }
+}
+
 void IndependentCascade::run() {
-    // TODO: Clean? Figure out if you want to run() multiple times or just create a new simulation? In that case call run() in the constructor?
-    // TODO: might be dangerous for multi-threading
+    std::vector<WorkerState> workers(configuration_.worker_count);
+    std::vector<std::jthread> threads;
+    threads.reserve(configuration_.worker_count);
+    
+    // Initialize worker state
+    for (auto& worker : workers) {
+        // state.generator_.seed(configuration_.random_seed);
+        worker.active_.assign(graph_.node_count(), 0);
+        worker.current_frontier_.reserve(graph_.node_count());
+        worker.next_frontier_.reserve(graph_.node_count());
+        worker.partial_access_counts_.assign(graph_.node_count(), 0);
+    }
+    
+    // Divide the work evenly
+    const std::size_t base = configuration_.simulations / configuration_.worker_count;
+    const std::size_t remainder = configuration_.simulations % configuration_.worker_count;
+
+    for (std::size_t worker_index = 0; worker_index < configuration_.worker_count; ++worker_index) {
+        workers[worker_index].simulations_ = base + (worker_index < remainder ? 1 : 0);
+
+        threads.emplace_back(
+            [this, &worker = workers[worker_index]] {
+                run_worker(worker);
+            }
+        );
+    }
+    
+    threads.clear();
+    
     // Reset results so run() represents one complete Monte Carlo experiment.
     std::fill(access_counts_.begin(), access_counts_.end(), 0);
     std::fill(access_probs_.begin(), access_probs_.end(), 0);
     
-    WorkerState state;
-    state.generator_.seed(configuration_.random_seed);
-    state.active_.resize(graph_.node_count(), 0);
-    state.current_frontier_.reserve(graph_.node_count());
-    state.next_frontier_.reserve(graph_.node_count());
-    state.access_counts_.assign(graph_.node_count(), 0);
-    
-    for (size_t simulation = 0; simulation < configuration_.simulations; ++simulation) {
-        state.generator_.seed(cascade_seed(simulation));
-        cascade(state);
+    for (const auto& worker : workers) {
+        for (std::size_t node = 0; node < graph_.node_count(); ++node) {
+            access_counts_[node] += worker.partial_access_counts_[node];
+        }
     }
-    
-    access_counts_ = std::move(state.access_counts_);
 
     // Convert accumulated activation counts into access probabilities.
     const Probability simulation_count = static_cast<Probability>(configuration_.simulations);
@@ -160,12 +187,19 @@ std::uint64_t IndependentCascade::cascade_seed(std::size_t simulation_index) con
 }
 
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+const IndependentCascade::Metrics& IndependentCascade::metrics() const {
+    metrics = {};
 
-const IndependentCascade::Metrics&
-IndependentCascade::metrics() const {
-    return metrics_;
+    for (const auto& worker : workers) {
+        metrics.cascades += worker.metrics.cascades;
+        metrics.activated_nodes += worker.metrics.activated_nodes;
+        metrics.neighbor_examinations += worker.metrics.neighbor_examinations;
+        metrics.activation_successes += worker.metrics.activation_successes;
+        metrics.activation_failures += worker.metrics.activation_failures;
+    }
+    
+    return metrics;
 }
-
 #endif
 
 }  // namespace influence
