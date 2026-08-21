@@ -68,7 +68,19 @@ private:
     std::vector<NodeId> current_frontier_;
     std::vector<NodeId> next_frontier_;
     
-    // The rest is for profiling and metrics TODO: remove them
+    /* ========================================
+     Worker-State Abstraction (Multi-Thread)
+    ======================================== */
+    struct WorkerState {
+        std::mt19937_64 generator_;
+        
+        std::vector<std::uint8_t> active_;
+        std::vector<NodeId> current_frontier_;
+        std::vector<NodeId> next_frontier_;
+        std::vector<std::uint64_t> access_counts_;
+    };
+    
+    // The rest is for profiling and metrics
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
     Metrics metrics_;
 #endif
