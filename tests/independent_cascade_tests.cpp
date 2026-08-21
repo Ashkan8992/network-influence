@@ -155,6 +155,51 @@ TEST(IndependentCascadeTest, RunStartsANewExperiment) {
     EXPECT_EQ(first, second);
 }
 
+TEST(IndependentCascadeTest, SameSeedProducesSameResults) {
+    Graph graph(3, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+    graph.add_edge(1, 2);
+
+    IndependentCascade::Configuration config;
+    config.activation_probability = 0.5;
+    config.simulations = 1000;
+    config.random_seed = 12345;
+
+    IndependentCascade first(graph, config, {0});
+
+    IndependentCascade second(graph, config, {0});
+
+    first.run();
+    second.run();
+
+    EXPECT_EQ(first.access_probabilities(),
+              second.access_probabilities());
+}
+
+TEST(IndependentCascadeTest, DifferentSeedsCanProduceDifferentResults) {
+    Graph graph(3, Graph::Direction::Directed);
+
+    graph.add_edge(0, 1);
+    graph.add_edge(1, 2);
+
+    IndependentCascade::Configuration config;
+    config.activation_probability = 0.5;
+    config.simulations = 1000;
+    config.random_seed = 12345;
+
+    IndependentCascade first(graph, config, {0});
+    
+    config.random_seed = 50000;
+    IndependentCascade second(graph, config, {0});
+
+    first.run();
+    second.run();
+
+    EXPECT_NE(first.access_probabilities(),
+              second.access_probabilities());
+}
+
 /* TEST(IndependentCascadeTest, CascadeEffectProbability) {
     Graph graph(4, Graph::Direction::Directed);
 

@@ -61,6 +61,9 @@ private:
     // Run one stochastic Independent Cascade.
     void cascade(WorkerState& state);
     
+    // Cascade Seed Function
+    std::uint64_t cascade_seed(std::size_t simulation_index) const;
+    
 public:
     // Run the configured number of cascades.
     void run();

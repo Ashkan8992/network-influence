@@ -128,6 +128,7 @@ void IndependentCascade::run() {
     state.access_counts_.assign(graph_.node_count(), 0);
     
     for (size_t simulation = 0; simulation < configuration_.simulations; ++simulation) {
+        state.generator_.seed(cascade_seed(simulation));
         cascade(state);
     }
     
@@ -142,6 +143,20 @@ void IndependentCascade::run() {
 
 const std::vector<IndependentCascade::Probability>& IndependentCascade::access_probabilities() const {
     return access_probs_;
+}
+
+std::uint64_t IndependentCascade::cascade_seed(std::size_t simulation_index) const {
+    std::uint64_t value =
+        configuration_.random_seed +
+        static_cast<std::uint64_t>(simulation_index);
+
+    value ^= value >> 30;
+    value *= 0xbf58476d1ce4e5b9ULL;
+    value ^= value >> 27;
+    value *= 0x94d049bb133111ebULL;
+    value ^= value >> 31;
+
+    return value;
 }
 
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
