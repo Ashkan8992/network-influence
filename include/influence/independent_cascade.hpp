@@ -12,19 +12,39 @@ namespace influence {
 class IndependentCascade {
 public:
     using Probability = double;
-
+    
     struct Configuration {
         Probability activation_probability = 0.1;
         std::size_t simulations = 1'000;
         std::uint64_t random_seed = 0; // Reproducibility Purposes: 12345 or 0 for not RNG
         std::size_t worker_count = 1;
     };
+    
+    IndependentCascade(const Graph& graph, Configuration configuration, const std::vector<NodeId> seeds);
 
-    IndependentCascade(
-        const Graph& graph,
-        Configuration configuration,
-        const std::vector<NodeId> seeds
-    );
+public:
+    // Run the configured number of cascades.
+    void run(); // Don't call it in the constructor as you might "override its results".
+    
+    // Access the nodes activation probabilities.
+    const std::vector<Probability>& access_probabilities() const;
+    
+    // Metrics testing measures
+    struct Metrics {
+        std::uint64_t cascades = 0;
+        std::uint64_t activated_nodes = 0;
+        std::uint64_t neighbor_examinations = 0;
+        std::uint64_t activation_successes = 0;
+        std::uint64_t activation_failures = 0;
+    };
+    
+    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    Metrics metrics_;
+    #endif
+    // For profiling and metrics
+    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+        const Metrics& metrics() const;
+    #endif
     
 private:
     const Graph& graph_;
@@ -38,7 +58,7 @@ private:
     
     /* ========================================
      Worker-State Abstraction (Multi-Thread)
-    ======================================== */
+     ======================================== */
     struct WorkerState {
         // Persistent random-number generator.
         std::mt19937_64 generator_;
@@ -49,7 +69,6 @@ private:
         std::vector<NodeId> next_frontier_;
         std::vector<std::uint64_t> partial_access_counts_;
         
-    private:
         #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
         Metrics metrics_;
         #endif
@@ -61,27 +80,6 @@ private:
     
     // Cascade Seed Function
     std::uint64_t cascade_seed(std::size_t simulation_index) const;
-    
-public:
-    // Run the configured number of cascades.
-    void run(); // Don't call it in the constructor as you might "override its results".
-    
-    // Access the nodes activation probabilities.
-    const std::vector<Probability>& access_probabilities() const;
-    
-    // The rest is for profiling and metrics TODO: remove them
-    struct Metrics {
-        std::uint64_t cascades = 0;
-        std::uint64_t activated_nodes = 0;
-        std::uint64_t neighbor_examinations = 0;
-        std::uint64_t activation_successes = 0;
-        std::uint64_t activation_failures = 0;
-    };
-
-// For profiling and metrics
-#ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
-    const Metrics& metrics() const;
-#endif
 };
 
 }  // namespace influence

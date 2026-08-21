@@ -8,7 +8,7 @@
 
 namespace influence {
 
-IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0) { //, generator_(configuration.random_seed == 0 ? std::random_device{}() : configuration.random_seed), active_(graph.node_count(), 0) { // TODO: remove active_ initiation, and generator_ and access_count_?
+IndependentCascade::IndependentCascade(const Graph& graph, Configuration configuration, std::vector<NodeId> seeds) : graph_(graph), configuration_(configuration), seeds_(seeds), access_counts_(graph_.node_count(), 0), access_probs_(graph_.node_count(), 0.0) {
 
     if (configuration_.activation_probability < 0.0 ||
         configuration_.activation_probability > 1.0) {
@@ -50,25 +50,13 @@ void IndependentCascade::cascade(WorkerState& state) {
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     
     //  Tracks whether a node has already been activated during this cascade.
-    std::fill(state.active_.begin(), state.active_.end(), 0);
-    // TODO: replace this later with something more optimize like the line below
-    /* std::vector<uint8_t> active_(node_count, 0);
-     // turned into private member -- moved to constructor */
+    std::fill(state.active_.begin(), state.active_.end(), 0); // TODO: optimize like the line below
     
     // Nodes activated during the current propagation step.
     state.current_frontier_.clear();
-    /* std::vector<NodeId> current_frontier_;
-     // turned into private member */
     
     // Nodes activated during the next propagation step.
     state.next_frontier_.clear();
-    /* std::vector<NodeId> next_frontier_;
-     // turned into private member */
-    
-    // state.current_frontier.reserve(seeds_.size());
-    if (state.current_frontier_.capacity() < seeds_.size()) {
-        state.current_frontier_.reserve(seeds_.size());
-    }
     
     // Activate the initial seeds.
     for (NodeId seed : seeds_) {
@@ -166,6 +154,18 @@ void IndependentCascade::run() {
     for (std::size_t node = 0; node < access_counts_.size(); ++node) {
         access_probs_[node] = static_cast<Probability>(access_counts_[node]) / simulation_count;
     }
+    
+    #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
+    metrics_ = {};
+    for (const auto& worker : workers) {
+        metrics_.cascades += worker.metrics_.cascades;
+        metrics_.activated_nodes += worker.metrics_.activated_nodes;
+        metrics_.neighbor_examinations += worker.metrics_.neighbor_examinations;
+        metrics_.activation_successes += worker.metrics_.activation_successes;
+        metrics_.activation_failures += worker.metrics_.activation_failures;
+    }
+
+    #endif
 }
 
 const std::vector<IndependentCascade::Probability>& IndependentCascade::access_probabilities() const {
@@ -188,17 +188,7 @@ std::uint64_t IndependentCascade::cascade_seed(std::size_t simulation_index) con
 
 #ifdef INFLUENCE_ENABLE_SIMULATION_METRICS
 const IndependentCascade::Metrics& IndependentCascade::metrics() const {
-    metrics = {};
-
-    for (const auto& worker : workers) {
-        metrics.cascades += worker.metrics.cascades;
-        metrics.activated_nodes += worker.metrics.activated_nodes;
-        metrics.neighbor_examinations += worker.metrics.neighbor_examinations;
-        metrics.activation_successes += worker.metrics.activation_successes;
-        metrics.activation_failures += worker.metrics.activation_failures;
-    }
-    
-    return metrics;
+    return metrics_;
 }
 #endif
 
